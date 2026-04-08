@@ -10,6 +10,15 @@ dotenv.config();
 const userService = require('./user-service.js');
 
 const HTTP_PORT = process.env.PORT || 8080;
+let connectionPromise;
+
+function ensureConnection() {
+  if (!connectionPromise) {
+    connectionPromise = userService.connect();
+  }
+
+  return connectionPromise;
+}
 
 passport.use(
   new JWTStrategy(
@@ -36,6 +45,18 @@ passport.use(
 app.use(express.json());
 app.use(cors());
 app.use(passport.initialize());
+app.use(async (req, res, next) => {
+  try {
+    await ensureConnection();
+    next();
+  } catch (err) {
+    res.status(500).json({ message: 'unable to connect to database' });
+  }
+});
+
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'user api is running' });
+});
 
 app.post('/api/user/register', (req, res) => {
   userService
@@ -93,11 +114,17 @@ app.delete('/api/user/favourites/:id', passport.authenticate('jwt', { session: f
     })
 });
 
-userService.connect()
-.then(() => {
-    app.listen(HTTP_PORT, () => { console.log('API listening on: ' + HTTP_PORT) });
-})
-.catch((err) => {
-    console.log('unable to start the server: ' + err);
-    process.exit();
-});
+if (require.main === module) {
+  ensureConnection()
+    .then(() => {
+      app.listen(HTTP_PORT, () => {
+        console.log('API listening on: ' + HTTP_PORT);
+      });
+    })
+    .catch((err) => {
+      console.log('unable to start the server: ' + err);
+      process.exit();
+    });
+}
+
+module.exports = app;
