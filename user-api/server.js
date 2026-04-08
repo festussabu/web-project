@@ -44,14 +44,19 @@ passport.use(
 
 app.use(express.json());
 app.use(cors());
-app.options('*', cors());
-app.use(passport.initialize());
-app.use(async (req, res, next) => {
+app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
-    next();
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(200).end();
     return;
   }
 
+  next();
+});
+app.use(passport.initialize());
+app.use(async (req, res, next) => {
   try {
     await ensureConnection();
     next();
