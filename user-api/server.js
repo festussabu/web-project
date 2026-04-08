@@ -44,8 +44,14 @@ passport.use(
 
 app.use(express.json());
 app.use(cors());
+app.options('*', cors());
 app.use(passport.initialize());
 app.use(async (req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    next();
+    return;
+  }
+
   try {
     await ensureConnection();
     next();
