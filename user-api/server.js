@@ -64,7 +64,7 @@ app.get('/', (req, res) => {
   res.status(200).json({ message: 'user api is running' });
 });
 
-app.post('/api/user/register', (req, res) => {
+function registerHandler(req, res) {
   userService
     .registerUser(req.body)
     .then((msg) => {
@@ -73,9 +73,9 @@ app.post('/api/user/register', (req, res) => {
     .catch((msg) => {
       res.status(422).json({ message: msg });
     });
-});
+}
 
-app.post('/api/user/login', (req, res) => {
+function loginHandler(req, res) {
   userService
     .checkUser(req.body)
     .then((user) => {
@@ -90,35 +90,46 @@ app.post('/api/user/login', (req, res) => {
     .catch((msg) => {
       res.status(422).json({ message: msg });
     });
-});
+}
 
-app.get('/api/user/favourites', passport.authenticate('jwt', { session: false }), (req, res) => {
-    userService.getFavourites(req.user._id)
+function getFavouritesHandler(req, res) {
+  userService.getFavourites(req.user._id)
     .then(data => {
         res.status(200).json(data);
     }).catch(msg => {
         res.status(422).json({ error: msg });
     })
 
-});
+}
 
-app.put('/api/user/favourites/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
-    userService.addFavourite(req.user._id, req.params.id)
+function addFavouriteHandler(req, res) {
+  userService.addFavourite(req.user._id, req.params.id)
     .then(data => {
         res.status(200).json(data)
     }).catch(msg => {
         res.status(422).json({ error: msg });
     })
-});
+}
 
-app.delete('/api/user/favourites/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
-    userService.removeFavourite(req.user._id, req.params.id)
+function removeFavouriteHandler(req, res) {
+  userService.removeFavourite(req.user._id, req.params.id)
     .then(data => {
         res.status(200).json(data)
     }).catch(msg => {
         res.status(422).json({ error: msg });
     })
-});
+}
+
+app.post('/register', registerHandler);
+app.post('/api/user/register', registerHandler);
+app.post('/login', loginHandler);
+app.post('/api/user/login', loginHandler);
+app.get('/favourites', passport.authenticate('jwt', { session: false }), getFavouritesHandler);
+app.get('/api/user/favourites', passport.authenticate('jwt', { session: false }), getFavouritesHandler);
+app.put('/favourites/:id', passport.authenticate('jwt', { session: false }), addFavouriteHandler);
+app.put('/api/user/favourites/:id', passport.authenticate('jwt', { session: false }), addFavouriteHandler);
+app.delete('/favourites/:id', passport.authenticate('jwt', { session: false }), removeFavouriteHandler);
+app.delete('/api/user/favourites/:id', passport.authenticate('jwt', { session: false }), removeFavouriteHandler);
 
 if (require.main === module) {
   ensureConnection()
